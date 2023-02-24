@@ -335,14 +335,14 @@
         <n-tag>能效等级：{{ level }}级</n-tag>
       </n-gi>
     </n-grid>
-    <n-grid x-gap="5" :cols="10">
+    <!-- <n-grid x-gap="5" :cols="10">
       <n-gi :span="2">
         <n-button type="info" :on-click="showthis">点击计算</n-button>
       </n-gi>
-    </n-grid>
+    </n-grid> -->
   </n-space>
-  <pre>{{ E_supply }}</pre>
-  <pre>{{ totalPcp }}</pre>
+  <!-- <pre>{{ E_supply }}</pre>
+  <pre>{{ totalPcp }}</pre> -->
 </template>
 
 <script setup lang="ts">
