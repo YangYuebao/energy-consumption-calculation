@@ -578,7 +578,7 @@ function getColumn(Q, oil) {
     alert("供气流量小于4m³/min")
     return -1
   }
-  while (Q < Qz_gap[n + 1]) {
+  while (Q >= Qz_gap[n + 1]) {
     n += 1
   }
   if (oil) {
