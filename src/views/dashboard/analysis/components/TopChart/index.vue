@@ -212,47 +212,57 @@
 
     <n-grid x-gap="5" :cols="10" v-if="Pcp_option_id === '2' && Qcp_option_id === '2'">
       <n-gi :span="2">
-        <n-tag size="large" round type="info"> 工频机额定流量 </n-tag>
+        <n-tag size="large" round type="info"> 工频机台数 </n-tag>
       </n-gi>
       <n-gi :span="6">
-        <n-input-number v-model:value="Qst_rated" :show-button="false">
+        <n-input-number v-model:value="ncp_st" :show-button="false" >
           <template #suffix>
-            吸气状态 m³/min
+            下列额定参数先输入工频机
           </template>
         </n-input-number>
       </n-gi>
     </n-grid>
 
-    <n-grid x-gap="5" :cols="10" v-if="Pcp_option_id === '2' && Qcp_option_id === '2'">
-      <n-gi :span="2">
-        <n-tag size="large" round type="info"> 工频机台数 </n-tag>
-      </n-gi>
-      <n-gi :span="6">
-        <n-input-number v-model:value="ncp_st" :show-button="false" />
-      </n-gi>
-    </n-grid>
-
     <n-grid x-gap="5" :cols="10" v-if="Pcp_option_id === '2'">
       <n-gi :span="2">
-        <n-tag size="large" round type="info"> 空压机运行参数 </n-tag>
+        <n-tag size="large" round type="info"> 空压机额定参数 </n-tag>
       </n-gi>
       <n-gi :span="7">
         <n-dynamic-input v-model:value="Pcp_2" :min="ncp" :max="ncp">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-input-number v-model:value="value[0]" style="margin-right:12px; width: 200px" placeholder="额定功率 kW"
-                :show-button="false" />
-              <n-input-number v-model:value="value[1]" style="margin-right:12px; width: 200px" placeholder="额定流量 m³/min"
-                :show-button="false" />
-              <n-input-number v-model:value="value[2]" style="margin-right:12px; width: 200px" placeholder="额定吸气压力 MPa"
-                :show-button="false" />
-              <n-input-number v-model:value="value[3]" style="margin-right:12px; width: 200px" placeholder="额定排气压力 MPa"
+              <n-input-number v-model:value="value[0]" style="margin-right:12px; width: 200px" placeholder="功率"
+                :show-button="false">
+                <template #suffix>
+                  kw
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[1]" style="margin-right:12px; width: 200px" placeholder="流量"
+                :show-button="false">
+                <template #suffix>
+                  m³/min
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[2]" style="margin-right:12px; width: 200px" placeholder="吸气压力"
+                :show-button="false">
+                <template #suffix>
+                  MPa
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[3]" style="margin-right:12px; width: 200px" placeholder="排气压力"
+                :show-button="false" >
+                <template #suffix>
+                  MPa
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[4]" style="margin-right:12px; width: 200px" placeholder="服务系数"
                 :show-button="false" />
             </div>
           </template>
         </n-dynamic-input>
       </n-gi>
     </n-grid>
+
   </n-space>
 
   <n-divider title-placement="left">
@@ -261,7 +271,7 @@
   <n-space vertical>
     <n-grid x-gap="5" :cols="10">
       <n-gi :span="2">
-        <n-tag size="large" round type="info"> 干燥机总功率 </n-tag>
+        <n-tag size="large" round type="info"> 干燥机平均功率 </n-tag>
       </n-gi>
       <n-gi :span="6">
         <n-input-number v-model:value="Pdryer" :show-button="false">
@@ -274,7 +284,7 @@
 
     <n-grid x-gap="5" :cols="10">
       <n-gi :span="2">
-        <n-tag size="large" round type="info"> 冷却系统功率 </n-tag>
+        <n-tag size="large" round type="info"> 冷却系统平均功率 </n-tag>
       </n-gi>
       <n-gi :span="6">
         <n-input-number v-model:value="Pcooler" :show-button="false">
@@ -287,7 +297,7 @@
 
     <n-grid x-gap="5" :cols="10">
       <n-gi :span="2">
-        <n-tag size="large" round type="info"> 其它设备功率 </n-tag>
+        <n-tag size="large" round type="info"> 其它设备平均功率 </n-tag>
       </n-gi>
       <n-gi :span="6">
         <n-input-number v-model:value="Pother" :show-button="false">
@@ -311,14 +321,30 @@
         <n-dynamic-input v-model:value="supply" :min="1" :max="10" :on-create="supply_onCreate">
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
-              <n-input-number v-model:value="value[0]" style="margin-right:12px; width: 200px" placeholder="压力 MPa"
-                :show-button="false" />
-              <n-input-number v-model:value="value[1]" style="margin-right:12px; width: 200px" placeholder="流量 m³/min"
-                :show-button="false" />
-              <n-input-number v-model:value="value[2]" style="margin-right:12px; width: 200px" placeholder="含油量 mg/m³"
-                :show-button="false" />
-              <n-input-number v-model:value="value[3]" style="margin-right:12px; width: 200px" placeholder="露点 ℃"
-                :show-button="false" />
+              <n-input-number v-model:value="value[0]" style="margin-right:12px; width: 200px" placeholder="压力"
+                :show-button="false" >
+                <template #suffix>
+                  MPa
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[1]" style="margin-right:12px; width: 200px" placeholder="流量"
+                :show-button="false" >
+                <template #suffix>
+                  m³/min
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[2]" style="margin-right:12px; width: 200px" placeholder="含油量"
+                :show-button="false" >
+                <template #suffix>
+                  mg/m³
+                </template>
+              </n-input-number>
+              <n-input-number v-model:value="value[3]" style="margin-right:12px; width: 200px" placeholder="露点"
+                :show-button="false" >
+                <template #suffix>
+                  ℃
+                </template>
+              </n-input-number>
             </div>
           </template>
         </n-dynamic-input>
@@ -385,7 +411,7 @@ const Pcp_options = [             //压缩机功耗计算类型选择
 const Pcp = ref([[0]])            //每台压缩机的功率
 const totalPcp = ref(0)
 
-const Pcp_2 = ref([[null, null, null, null]])      //每台压缩机的排气压力
+const Pcp_2 = ref([[null, null, null, null,null]])      //每台压缩机的排气压力
 
 const Qcp_option_id = ref(null);  //压缩机流量计算类型id
 const Qcp_options = [             //压缩机流量计算类型选择
@@ -435,7 +461,7 @@ function ncpChange() {
   console.log("ncpChange!")
   reBuildcp(pcp, 1, 0)
   reBuildcp(Pcp, 1, 0)
-  reBuildcp(Pcp_2, 4, null)
+  reBuildcp(Pcp_2, 5, null)
   reBuildcp(Qcp, 1, 0)
   return 1
 }
@@ -475,11 +501,15 @@ function cp_Q_cal() {
     Q_supply_total.value += supply.value[i][1]
   }
   if (Qcp_option_id.value == 2) {
+    Qst_rated.value=0
+    for (var i=0;i<ncp_st.value;i++){
+      Qst_rated.value+=Pcp_2.value[i][1]
+    }
     ncp_va.value = ncp.value - ncp_st.value
     Qcp_supply_total.value = Q_supply_total.value / (1 - sigma.value)
-    Qva.value = (Qcp_supply_total.value - ncp_st.value * Qst_rated.value) / ncp_va.value
+    Qva.value = (Qcp_supply_total.value - Qst_rated.value) / ncp_va.value
     for (var i = 0; i < ncp_st.value; i++) {
-      Qcp.value[i][0] = Qst_rated.value
+      Qcp.value[i][0] = Pcp_2.value[i][1]
     }
     for (var i = ncp_st.value; i < ncp.value; i++) {
       Qcp.value[i][0] = Qva.value
@@ -492,7 +522,7 @@ function cp_power_cal() {
   if (Pcp_option_id.value == 2) {
     cp_Q_cal()
     for (var i = 0; i < ncp.value; i++) {
-      Pcp.value[i] = [Pcp_2.value[i][0] * Qcp.value[i][0] / Pcp_2.value[i][1] * pin.value * Math.log(pcp.value[i][0] / pin.value) / Pcp_2.value[i][2] / Math.log(Pcp_2.value[i][3] / Pcp_2.value[i][2])]
+      Pcp.value[i] = [Pcp_2.value[i][0] * Pcp_2.value[i][4] * Qcp.value[i][0] / Pcp_2.value[i][1] * pin.value * Math.log(pcp.value[i][0] / pin.value) / Pcp_2.value[i][2] / Math.log(Pcp_2.value[i][3] / Pcp_2.value[i][2])]
     }
   }
   return 1
@@ -530,21 +560,21 @@ function supply_E_cal() {
     E_supply.value = 0
     eta_total.value = 0
     for (var i = 0; i < supply.value.length; i++) {
-       var temp=16.76 * pin.value * supply.value[i][1] * Math.log(supply.value[i][0] / pin.value) * m[i] * n[i]
+      var temp = 16.76 * pin.value * supply.value[i][1] * Math.log(supply.value[i][0] / pin.value) * m[i] * n[i]
       E_supply.value += temp
       eta_total.value += temp / (totalPcp.value + Pdryer.value + Pother.value + Pcooler.value)
     }
   }
-  
+
 }
 
 function getLevel(Q, td, oil) {
   var temp_level = 4
   if (td >= 3) {
     var temp = t1[getColumn(Q, oil)]
-    console.log(eta_total.value * 100,temp)
+    console.log(eta_total.value * 100, temp)
     while (eta_total.value * 100 >= temp[temp_level] && temp_level >= 0) {
-      console.log("hello",temp_level)
+      console.log("hello", temp_level)
       temp_level--
     }
   } else if (td < 3 && td >= -20) {
@@ -597,15 +627,10 @@ function eta_calculate() {
   supply_E_cal()
   if (supply.value.length >= 2) {
     return getLevel(Q_supply_total.value, 5, true)
-  }else{
-    getLevel(Q_supply_total.value, supply.value[0][3], oilled) 
+  } else {
+    getLevel(Q_supply_total.value, supply.value[0][3], oilled)
   }
   return 1
-}
-
-function showthis() {
-  console.log(m)
-  console.log(n)
 }
 
 const t1 = [[55.0, 50.0, 45.5, 41.5, 38.0], [51.5, 47.0, 43.0, 39.0, 35.5], [58.0, 53.0, 48.0, 44.0, 40.0], [54.5, 50.0, 45.0, 41.5, 37.5], [61.0, 55.5, 50.5, 46.0, 42.0], [57.5, 52.5, 47.5, 43.5, 39.5], [64.0, 58.0, 53.0, 48.5, 44.0], [60.0, 55.0, 50.0, 45.5, 41.5]]
