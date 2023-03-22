@@ -215,7 +215,7 @@
         <n-tag size="large" round type="info"> 工频机台数 </n-tag>
       </n-gi>
       <n-gi :span="6">
-        <n-input-number v-model:value="ncp_st" :show-button="false" >
+        <n-input-number v-model:value="ncp_st" :show-button="false">
           <template #suffix>
             下列额定参数先输入工频机
           </template>
@@ -250,7 +250,7 @@
                 </template>
               </n-input-number>
               <n-input-number v-model:value="value[3]" style="margin-right:12px; width: 200px" placeholder="排气压力"
-                :show-button="false" >
+                :show-button="false">
                 <template #suffix>
                   MPa
                 </template>
@@ -322,25 +322,25 @@
           <template #default="{ value }">
             <div style="display: flex; align-items: center; width: 100%">
               <n-input-number v-model:value="value[0]" style="margin-right:12px; width: 200px" placeholder="压力"
-                :show-button="false" >
+                :show-button="false">
                 <template #suffix>
                   MPa
                 </template>
               </n-input-number>
               <n-input-number v-model:value="value[1]" style="margin-right:12px; width: 200px" placeholder="流量"
-                :show-button="false" >
+                :show-button="false">
                 <template #suffix>
                   m³/min
                 </template>
               </n-input-number>
               <n-input-number v-model:value="value[2]" style="margin-right:12px; width: 200px" placeholder="含油量"
-                :show-button="false" >
+                :show-button="false">
                 <template #suffix>
                   mg/m³
                 </template>
               </n-input-number>
               <n-input-number v-model:value="value[3]" style="margin-right:12px; width: 200px" placeholder="露点"
-                :show-button="false" >
+                :show-button="false">
                 <template #suffix>
                   ℃
                 </template>
@@ -354,11 +354,14 @@
       <n-gi :span="2">
         <n-button type="info" :on-click="eta_calculate">点击计算</n-button>
       </n-gi>
-      <n-gi :span="3">
+      <n-gi :span="2">
         <n-tag>输功效率：{{ Math.round(eta_total * 10000) / 100 }}%</n-tag>
       </n-gi>
-      <n-gi :span="3">
+      <n-gi :span="2">
         <n-tag>能效等级：{{ level }}级</n-tag>
+      </n-gi>
+      <n-gi :span="2">
+        <n-button type="success" :on-click="excelExport">下载报告</n-button>
       </n-gi>
     </n-grid>
     <!-- <n-grid x-gap="5" :cols="10">
@@ -367,12 +370,14 @@
       </n-gi>
     </n-grid> -->
   </n-space>
+
   <!-- <pre>{{ E_supply }}</pre>
   <pre>{{ totalPcp }}</pre> -->
 </template>
 
 <script setup lang="ts">
 import { Ref, ref, onMounted, watch } from 'vue';
+import * as XLSX from 'xlsx';
 
 const t = ref(0)                  //测试时间
 const pin = ref(0.1)                //压缩机吸气压力
@@ -411,7 +416,7 @@ const Pcp_options = [             //压缩机功耗计算类型选择
 const Pcp = ref([[0]])            //每台压缩机的功率
 const totalPcp = ref(0)
 
-const Pcp_2 = ref([[null, null, null, null,null]])      //每台压缩机的排气压力
+const Pcp_2 = ref([[null, null, null, null, null]])      //每台压缩机的排气压力
 
 const Qcp_option_id = ref(null);  //压缩机流量计算类型id
 const Qcp_options = [             //压缩机流量计算类型选择
@@ -501,9 +506,9 @@ function cp_Q_cal() {
     Q_supply_total.value += supply.value[i][1]
   }
   if (Qcp_option_id.value == 2) {
-    Qst_rated.value=0
-    for (var i=0;i<ncp_st.value;i++){
-      Qst_rated.value+=Pcp_2.value[i][1]
+    Qst_rated.value = 0
+    for (var i = 0; i < ncp_st.value; i++) {
+      Qst_rated.value += Pcp_2.value[i][1]
     }
     ncp_va.value = ncp.value - ncp_st.value
     Qcp_supply_total.value = Q_supply_total.value / (1 - sigma.value)
@@ -633,12 +638,213 @@ function eta_calculate() {
   return 1
 }
 
+interface IExcelExportData {
+  [key: string]: number;
+}
+
+
+/*
+excelmode 0: 适用于新项目预估能效，excellp: [空压机站供气压力,管网压降,后处理压降]
+excelmode 1: 适用于已经投入使用的站房，excellp:[空压机排气压力1#,空压机排气压力2#,...]
+excelcp: [
+  [1#额定流量,1#额定排压,1#额定比功率,1#开机情况（1开0关）,1#工变频（1工0变）], // 
+  [2#额定流量,2#额定排压,2#额定比功率,2#开机情况（1开0关）,2#工变频（1工0变）],
+  ...
+]
+excelres: [空压机运行比功率1#,空压机运行比功率2#,...]
+exceldict: {
+  "测试时间": 0,
+  "空压机吸气压力": 0,
+  "二次侧热利用率": 0,
+
+  "系统泄露量（估算）": 0,
+
+  "压力": 0,
+  "露点": 0,
+  "有油无油": 0,
+  "流量": 0,
+
+  "冷干机": 0,
+  "吸干机": 0,
+  "水泵+热回收水泵+冷却塔风机": 0,
+
+  "排气压力": 0,
+  "排气露点": 0,
+  "站房压降": 0,
+  "空压站用电总量": 0,
+  "冷却系统用电总量": 0,
+  "后处理用电总量": 0,
+  "空压机站用电总量": 0,
+}
+*/
+
+const excelDict: IExcelExportData = {
+  "测试时间": 0,
+  "空压机吸气压力": 0,
+  "二次侧热利用率": 0,
+
+  "系统泄露量（估算）": 0,
+
+  "压力": 0,
+  "露点": 0,
+  "有油无油": 0,
+  "流量": 0,
+
+  "冷干机": 0,
+  "吸干机": 0,
+  "水泵+热回收水泵+冷却塔风机": 0,
+
+  "排气压力": 0,
+  "排气露点": 0,
+  "站房压降": 0,
+  "空压站用电总量": 0,
+  "冷却系统用电总量": 0,
+  "后处理用电总量": 0,
+  "平均泄露量": 0,
+  "平均供气流量": 0,
+  "空压机总产气量": 0,
+  "空压站用电单耗": 0,
+  "空压站系统比功率": 0,
+  "站房输功效率": 0,
+  "热回收系数": 0,
+  "站房综合输功效率": 0,
+  "能效等级值": 0,
+
+};
+
+const excelmode = 0;
+
+const excellp = [0.8, 0.1, 0.1];
+
+const excelcp = [
+  [0.5, 0.8, 0.5, 1, 1],
+  [0.5, 0.8, 0.5, 1, 1],
+  [0.5, 0.8, 0.5, 1, 1],
+  [0.5, 0.8, 0.5, 1, 1],
+  [0.5, 0.8, 0.5, 1, 1],
+];
+
+const excelres = [0.5, 0.5, 0.5, 0.5, 0.5];
+
+
+function getExcelData(
+  mode = 0, lp: number[] = [],
+  cp: number[][] = [],
+  res: number[] = [],
+  dictdata: IExcelExportData = {},
+) {
+  const tofillList: number[] = [];
+  const data: (number | string)[][] = [];
+  var ind = 0;
+  tofillList.push(ind);
+  data.push(["————————————  能耗评价  ————————————"]);
+  data.push(["测试时间", dictdata["测试时间"], "H"])
+  data.push(["空压机吸气压力", dictdata["空压机吸气压力"], "MPa"])
+  data.push(["二次侧热利用率", dictdata["二次侧热利用率"], "KW"])
+
+  ind = ind + 4; tofillList.push(ind);
+  data.push(["————————————  空压机排气压力  ————————————"]);
+  if (mode == 0) {
+    data.push(["空压机站供气压力", lp[0], "MPa"])
+    data.push(["管网压降", lp[1], "MPa"])
+    data.push(["后处理压降", lp[2], "MPa"])
+    ind = ind + 4;
+  } else {
+    data.push(["空压机台数", lp.length, "台"])
+    for (let i = 0; i < lp.length; i++) {
+      data.push([`空压机排气压力${i + 1}#`, lp[i], "MPa"])
+    }
+    ind = ind + lp.length + 2;
+  }
+  tofillList.push(ind);
+  data.push(["————————————  空压机功耗计算  ————————————"]);
+  data.push(["系统泄露量（估算）", dictdata["系统泄露量（估算）"], "m³/h"])
+  data.push(["空压机额定参数", "额定流量", "额定排压", "额定比功率", "开机情况（1开0关）", "工变频（1工0变）"])
+  for (let i = 0; i < cp.length; i++) {
+    const cp_i: (string | number)[] = [`空压机${i + 1}#`];
+    data.push(cp_i.concat(cp[i]))
+  }
+  ind = ind + 3 + cp.length; tofillList.push(ind);
+  data.push(["————————————  供气参数  ————————————"]);
+  data.push(["压力", dictdata["压力"], "MPa"])
+  data.push(["露点", dictdata["露点"], "℃"])
+  data.push(["有油无油", dictdata["有油无油"], "有/无（1/0）"])
+  data.push(["流量", dictdata["流量"], "m³/h"])
+
+  ind = ind + 5; tofillList.push(ind);
+  data.push(["————————————  空压站其他用电设备平均功率  ————————————"]);
+  data.push(["吸干机", dictdata["吸干机"], "MPa"])
+  data.push(["冷干机", dictdata["冷干机"], "MPa"])
+  data.push(["水泵+热回收水泵+冷却塔风机", dictdata["水泵+热回收水泵+冷却塔风机"], "MPa"])
+
+  ind = ind + 4; tofillList.push(ind);
+  data.push(["————————————  计算结果  ————————————"]);
+  for (let i = 0; i < res.length; i++) {
+    data.push([`空压机运行比功率${i + 1}#`, res[i], "kW/(m^3/min)"])
+  }
+  data.push(["排气压力", dictdata["排气压力"], "MPa"])
+  data.push(["排气露点", dictdata["排气露点"], "℃"])
+  data.push(["站房压降", dictdata["站房压降"], "MPa"])
+  data.push(["排气压力", dictdata["排气压力"], "MPa"])
+  data.push(["排气露点", dictdata["排气露点"], "℃"])
+  data.push(["站房压降", dictdata["站房压降"], "MPa"])
+  data.push(["空压站用电总量", dictdata["空压站用电总量"], "kWh"])
+  data.push(["冷却系统用电总量", dictdata["冷却系统用电总量"], "kWh"])
+  data.push(["后处理用电总量", dictdata["后处理用电总量"], "kWh"])
+  data.push(["平均泄露量", dictdata["平均泄露量"], "m³/min"])
+  data.push(["平均供气流量", dictdata["平均供气流量"], "m³/min"])
+  data.push(["空压机总产气量", dictdata["空压机总产气量"], "m³/min"])
+  data.push(["空压站用电单耗", dictdata["空压站用电单耗"], "KWh/m³"])
+  data.push(["空压站系统比功率", dictdata["空压站系统比功率"], "kW/(m^3/min)"])
+  data.push(["站房输功效率", dictdata["站房输功效率"], "%"])
+  data.push(["热回收系数", dictdata["热回收系数"]])
+  data.push(["站房综合输功效率", dictdata["站房综合输功效率"], "%"])
+  data.push(["能效等级值", dictdata["能效等级值"], "级"])
+
+  return {
+    data: data,
+    tofillList: tofillList
+  };
+}
+
+
+function excelExport() {
+  // 使用 XLSX.utils.aoa_to_sheet(excleData);
+  const data = getExcelData(excelmode, excellp, excelcp, excelres, excelDict);
+  let { data: excleData, tofillList: tofillList } = data;
+
+  const _merges: XLSX.Range[] = [];
+  for (let i = 0; i < tofillList.length; i++) {
+    _merges.push({ s: { r: tofillList[i], c: 0 }, e: { r: tofillList[i], c: 5 } })
+  }
+
+  const worksheet = XLSX.utils.aoa_to_sheet(excleData);
+
+  worksheet['!cols'] = [
+    { wpx: 170 }, { wpx: 60 }, { wpx: 100 }, { wpx: 100 }, { wpx: 120 }, { wpx: 100 },];  // 设置每列的列宽，10代表10个字符，注意中文占2个字符
+
+  worksheet['!merges'] = _merges;//合并单元格
+
+  // 新建一个工作簿
+  const workbook = XLSX.utils.book_new();//创建虚拟workbook
+  /* 将工作表添加到工作簿,生成xlsx文件(book,sheet数据,sheet命名)*/
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+
+  /* 输出工作表， 由文件名决定的输出格式(book,xlsx文件名称)*/
+  XLSX.writeFile(workbook, '报告.xlsx');
+
+  return 0;
+};
+
+
 const t1 = [[55.0, 50.0, 45.5, 41.5, 38.0], [51.5, 47.0, 43.0, 39.0, 35.5], [58.0, 53.0, 48.0, 44.0, 40.0], [54.5, 50.0, 45.0, 41.5, 37.5], [61.0, 55.5, 50.5, 46.0, 42.0], [57.5, 52.5, 47.5, 43.5, 39.5], [64.0, 58.0, 53.0, 48.5, 44.0], [60.0, 55.0, 50.0, 45.5, 41.5]]
 const t2 = [[52.5, 47.5, 43.5, 39.5, 36.5], [49.0, 45.0, 41.0, 37.0, 34.0], [55.0, 50.5, 45.5, 42.0, 38.0], [52.0, 47.5, 43.0, 39.5, 36.0], [58.0, 53.0, 48.0, 44.0, 40.0], [55.0, 50.0, 45.0, 41.5, 37.5], [61.0, 55.0, 50.5, 46.0, 42.0], [57.0, 52.5, 47.5, 43.5, 39.5]]
 const t3 = [[50.0, 45.5, 41.5, 37.5, 34.5], [47.0, 42.5, 39.0, 35.5, 32.5], [52.5, 48.0, 43.5, 40.0, 36.5], [49.5, 45.5, 41.0, 37.5, 34.0], [55.5, 50.5, 46.0, 42.0, 38.0], [52.5, 47.5, 43.0, 39.5, 36.0], [58.0, 52.5, 48.0, 44.0, 40.0], [54.5, 50.0, 45.5, 41.5, 37.5]]
 const t4 = [[48.0, 43.5, 39.5, 36.0, 33.0], [45.0, 41.0, 37.5, 34.0, 31.0], [50.5, 46.0, 41.5, 38.5, 35.0], [47.5, 43.5, 39.0, 36.0, 32.5], [53.0, 48.5, 44.0, 40.0, 36.5], [50.0, 45.5, 41.5, 38.0, 34.5], [55.5, 50.5, 46.0, 42.0, 38.5], [52.0, 48.0, 43.5, 39.5, 36.0]]
 const t5 = [[44.0, 40.0, 36.5, 33.0, 30.5], [46.5, 42.5, 38.5, 35.0, 32.0], [49.0, 44.5, 40.5, 37.0, 33.5], [51.0, 46.5, 42.5, 39.0, 35.0]]
 const Qz_gap = [4, 20, 80, 300]
+
+
 
 // toRefs(options)
 </script>
